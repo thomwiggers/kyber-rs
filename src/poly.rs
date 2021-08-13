@@ -17,11 +17,17 @@ pub struct Poly<const K: usize> {
     coeffs: [i16; KYBER_N],
 }
 
+fn positive_repr(p: i16) -> u16 {
+    let result = p + ((p >> 15) & KYBER_Q as i16);
+    debug_assert!(result >= 0 && result < KYBER_Q as i16);
+    result as u16
+}
+
 impl<const K: usize> Poly<K> {
     pub const COMPRESSED_BYTES: usize = kyber_polycompressedbytes::<K>();
 
     /// Create a new empty polynomial
-    pub(crate) fn new() -> Self {
+    pub(crate) fn zero() -> Self {
         Poly {
             coeffs: [0; KYBER_N],
         }
@@ -30,11 +36,34 @@ impl<const K: usize> Poly<K> {
     /// Initialize a random polynomial
     #[cfg(test)]
     fn random() -> Self {
-        let mut poly = Self::new();
+        let mut poly = Self::zero();
         rand::thread_rng().fill(&mut poly.coeffs);
         poly.coeffs
             .iter_mut()
-            .for_each(|el| *el = (*el as u32 % KYBER_Q as u32) as i16);
+            .for_each(|el| *el = (*el as u16 % KYBER_Q as u16) as i16);
+        poly
+    }
+
+    /// Serialize a polynomial
+    pub fn to_bytes(&self, out: &mut [u8; KYBER_POLYBYTES]) {
+        for i in 0..KYBER_N / 2 {
+            let t0 = positive_repr(self.coeffs[2 * i]);
+            let t1 = positive_repr(self.coeffs[2 * i + 1]);
+            out[3 * i + 0] = t0 as u8;
+            out[3 * i + 1] = ((t0 >> 8) | (t1 << 4)) as u8;
+            out[3 * i + 2] = (t1 >> 4) as u8;
+        }
+    }
+
+    /// Deserialize a polynomial
+    pub fn from_bytes(input: &[u8; KYBER_POLYBYTES]) -> Self {
+        let mut poly = Self::zero();
+        for i in 0..KYBER_N / 2 {
+            poly.coeffs[2 * i + 0] =
+                (input[3 * i + 0] >> 0) as i16 | (((input[3 * i + 1] as i16) << 8) & 0xFFF);
+            poly.coeffs[2 * i + 1] =
+                (input[3 * i + 1] >> 4) as i16 | (((input[3 * i + 2] as i16) << 4) & 0xFFF);
+        }
         poly
     }
 
@@ -49,12 +78,8 @@ impl<const K: usize> Poly<K> {
                 for j in 0..8 {
                     // map to positive standard representation
                     const Q: u32 = KYBER_Q as u32;
-                    let u = self.coeffs[8 * i + j] as u32;
-                    let u = u + ((u >> 15) & Q);
+                    let u = positive_repr(self.coeffs[8 * i + j]) as u32;
                     let u = (((u << 4) + Q / 2) / Q) & 15;
-                    // from circl. Seems fewer operations
-                    //let u2 = ((((self.coeffs[8*i+j] as u32) << 4) + Q/2)/Q) & ((1 << 4) - 1);
-                    //assert_eq!(u, u2);
                     tmp[j] = u as u8;
                 }
 
@@ -69,8 +94,7 @@ impl<const K: usize> Poly<K> {
                 for j in 0..8 {
                     // map to positive standard representation
                     const Q: u32 = KYBER_Q as u32;
-                    let u = self.coeffs[8 * i + j] as u32;
-                    let u = u + ((u >> 15) & Q);
+                    let u = positive_repr(self.coeffs[8 * i + j]) as u32;
                     let u = (((u << 5) + Q / 2) / Q) & 31;
                     tmp[j] = u as u8;
                 }
@@ -90,7 +114,7 @@ impl<const K: usize> Poly<K> {
     pub fn decompress(buf: &[u8; Self::COMPRESSED_BYTES]) -> Self {
         debug_assert!(Self::COMPRESSED_BYTES == 128 || Self::COMPRESSED_BYTES == 160);
 
-        let mut out = Self::new();
+        let mut out = Self::zero();
 
         if Self::COMPRESSED_BYTES == 128 {
             #[allow(clippy::needless_range_loop)]
@@ -277,22 +301,22 @@ mod test {
 
     #[test]
     fn test_new() {
-        let _ = Poly::<2>::new();
-        let _ = Poly::<3>::new();
-        let _ = Poly::<4>::new();
+        let _ = Poly::<2>::zero();
+        let _ = Poly::<3>::zero();
+        let _ = Poly::<4>::zero();
     }
 
     #[test]
     fn test_poly_compress_calls() {
-        let poly = Poly::<2>::new();
+        let poly = Poly::<2>::zero();
         let mut outbuf = [0u8; Poly::<2>::COMPRESSED_BYTES];
         poly.compress_into(&mut outbuf);
 
-        let poly = Poly::<3>::new();
+        let poly = Poly::<3>::zero();
         let mut outbuf = [0u8; Poly::<3>::COMPRESSED_BYTES];
         poly.compress_into(&mut outbuf);
 
-        let poly = Poly::<4>::new();
+        let poly = Poly::<4>::zero();
         let mut outbuf = [0u8; Poly::<4>::COMPRESSED_BYTES];
         poly.compress_into(&mut outbuf);
     }
@@ -362,8 +386,8 @@ mod test {
     /// Some arithmetic tests
     #[test]
     fn test_arithmetic() {
-        let zeros = Poly::<2>::new();
-        let random = Poly::<2>::new();
+        let zeros = Poly::<2>::zero();
+        let random = Poly::<2>::zero();
 
         assert_eq!(random, &random + &zeros);
         assert_eq!(random, &random - &zeros);
@@ -371,5 +395,15 @@ mod test {
         assert_eq!(zeros, &random - &random);
         assert_eq!(random, &random - &zeros);
         assert_eq!(random, &random - zeros);
+    }
+
+    /// Test serialization and deserialization of polynomials.
+    #[test]
+    fn test_serialization() {
+        let start = Poly::<2>::random();
+        let mut out = [0u8; KYBER_POLYBYTES];
+        start.to_bytes(&mut out);
+        let poly2 = Poly::<2>::from_bytes(&out);
+        assert_eq!(start, poly2);
     }
 }
