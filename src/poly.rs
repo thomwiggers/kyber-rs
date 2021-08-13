@@ -6,6 +6,7 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
+#[cfg(test)]
 use rand::prelude::*;
 
 use crate::params::*;
