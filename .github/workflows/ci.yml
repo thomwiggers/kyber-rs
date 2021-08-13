@@ -1,0 +1,53 @@
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        rust:
+          - nightly
+
+    steps:
+      - uses: actions/checkout@v2.3.4
+        with:
+          submodules: true
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Cargo build
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: build
+
+      - name: Cargo test
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: test
+
+      - name: Cargo fmt
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Cargo clippy
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: clippy
+
+#  vim: set ft=yaml ts=2 sw=2 tw=0 et :
