@@ -12,7 +12,7 @@ use rand::prelude::*;
 use crate::params::*;
 
 /// Polynomial
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Poly<const K: usize> {
     coeffs: [i16; KYBER_N],
 }
@@ -35,7 +35,7 @@ impl<const K: usize> Poly<K> {
 
     /// Initialize a random polynomial
     #[cfg(test)]
-    fn random() -> Self {
+    pub(crate) fn random() -> Self {
         let mut poly = Self::zero();
         rand::thread_rng().fill(&mut poly.coeffs);
         poly.coeffs

@@ -17,7 +17,7 @@ pub const KYBER_SSBYTES: usize = 32;
 pub const KYBER_POLYBYTES: usize = 384;
 
 /// Size of a polynomial vector
-pub const fn kyber_polyvecbytes<const K: usize>() -> usize {
+pub const fn kyber_polyvec_compressed_bytes<const K: usize>() -> usize {
     if K == 2 || K == 3 {
         320 * K
     } else if K == 4 {
