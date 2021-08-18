@@ -3,9 +3,9 @@ use crate::{params::*, polyvec::PolyVec};
 fn pack_pk<const K: usize>(
     pk: &PolyVec<K>,
     seed: &[u8; KYBER_SYMBYTES],
-    output: &mut [u8; kyber_indcpa_pkbytes::<K>()],
+    output: &mut [u8; kyber_indcpa_pkbytes::<K>()], // https://hackmd.io/OZG_XiLFRs2Xmw5s39jRzA?view
 ) where
-    [(); kyber_polyvec_bytes::<K>()]: Sized, // huh?
+    [(); kyber_polyvec_bytes::<K>()]: // huh?
 {
     // FIXME once https://github.com/rust-lang/rust/issues/74674 clarifies
     let (polypart, seedpart) = output.split_at_mut(kyber_polyvec_bytes::<K>());
