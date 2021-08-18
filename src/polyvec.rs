@@ -32,7 +32,7 @@ impl<const K: usize> PolyVec<K> {
             .for_each(|(vec, outbuf)| vec.to_bytes(outbuf));
     }
 
-    pub fn from_bytes(input: &[u8; kyber_polyvec_bytes::<K>()]) -> Self {
+    pub fn from_bytes(input: &[u8; K * KYBER_POLYBYTES]) -> Self {
         let mut vec = MaybeUninit::uninit_array();
         for (poly, bytes) in vec.iter_mut().zip(input.array_chunks::<KYBER_POLYBYTES>()) {
             *poly = MaybeUninit::new(Poly::from_bytes(bytes));
