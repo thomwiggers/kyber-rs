@@ -24,7 +24,7 @@ fn positive_repr(p: i16) -> u16 {
 }
 
 impl<const K: usize> Poly<K> {
-    pub const COMPRESSED_BYTES: usize = kyber_polycompressedbytes::<K>();
+    pub const COMPRESSED_BYTES: usize = kyber_poly_compressed_bytes::<K>();
 
     /// Create a new empty polynomial
     pub(crate) fn zero() -> Self {

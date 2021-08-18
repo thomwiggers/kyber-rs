@@ -12,7 +12,7 @@ pub struct PolyVec<const K: usize> {
 }
 
 impl<const K: usize> PolyVec<K> {
-    const POLYVECBYTES: usize = K * KYBER_POLYBYTES;
+    pub(crate) const POLYVECBYTES: usize = K * KYBER_POLYBYTES;
 
     #[cfg(test)]
     fn random() -> Self {
@@ -25,14 +25,14 @@ impl<const K: usize> PolyVec<K> {
         PolyVec { vec }
     }
 
-    pub fn to_bytes(&self, out: &mut [u8; Self::POLYVECBYTES]) {
+    pub fn to_bytes(&self, out: &mut [u8; kyber_polyvec_bytes::<K>()]) {
         self.vec
             .iter()
             .zip(out.array_chunks_mut::<KYBER_POLYBYTES>())
             .for_each(|(vec, outbuf)| vec.to_bytes(outbuf));
     }
 
-    pub fn from_bytes(input: &[u8; Self::POLYVECBYTES]) -> Self {
+    pub fn from_bytes(input: &[u8; kyber_polyvec_bytes::<K>()]) -> Self {
         let mut vec = MaybeUninit::uninit_array();
         for (poly, bytes) in vec.iter_mut().zip(input.array_chunks::<KYBER_POLYBYTES>()) {
             *poly = MaybeUninit::new(Poly::from_bytes(bytes));
@@ -50,7 +50,7 @@ mod test {
     #[test]
     fn test_to_from_bytes() {
         let pv = PolyVec::<3>::random();
-        let mut outbuf = [0u8; PolyVec::<3>::POLYVECBYTES];
+        let mut outbuf = [0u8; {3 * KYBER_POLYBYTES}];
 
         pv.to_bytes(&mut outbuf)    ;
         let pv2 = PolyVec::<3>::from_bytes(&outbuf);

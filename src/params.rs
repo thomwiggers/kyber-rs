@@ -28,12 +28,16 @@ pub const fn kyber_polyvec_compressed_bytes<const K: usize>() -> usize {
 }
 
 /// Size of compressed polynomial
-pub const fn kyber_polycompressedbytes<const K: usize>() -> usize {
+pub const fn kyber_poly_compressed_bytes<const K: usize>() -> usize {
     if K == 2 || K == 3 {
         128
     } else {
         160
     }
+}
+
+pub const fn kyber_polyvec_bytes<const K: usize>() -> usize {
+    K * KYBER_POLYBYTES
 }
 
 /// Value of eta1 for this Kyber instance
@@ -43,6 +47,10 @@ pub const fn kyber_eta1<const K: usize>() -> usize {
     } else {
         2
     }
+}
+
+pub const fn kyber_indcpa_pkbytes<const K: usize>() -> usize {
+    kyber_polyvec_bytes::<K>() + KYBER_SYMBYTES
 }
 
 pub const KYBER_ETA2: usize = 2;
