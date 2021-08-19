@@ -9,7 +9,7 @@ use std::{
 #[cfg(test)]
 use rand::prelude::*;
 
-use crate::params::*;
+use crate::{cbd::poly_cbd_eta1, params::*, symmetric::prf};
 
 /// Polynomial
 #[derive(Debug, PartialEq, Clone)]
@@ -146,6 +146,15 @@ impl<const K: usize> Poly<K> {
         }
 
         out
+    }
+
+    pub fn from_noise_eta1(seed: &[u8; KYBER_SYMBYTES], nonce: u8) -> Self
+    where
+        [(); kyber_eta1::<K>() * KYBER_N / 4]: ,
+    {
+        let mut buf = [0u8; kyber_eta1::<K>() * KYBER_N / 4];
+        prf(seed, nonce, &mut buf);
+        poly_cbd_eta1(&buf)
     }
 }
 

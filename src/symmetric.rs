@@ -1,13 +1,12 @@
 use digest::{ExtendableOutput, Update, XofReader};
-use sha3::{Sha3XofReader, Sha3_256, Sha3_512, Shake128};
-use sha3::{Digest};
+use sha3::Digest;
+use sha3::{Sha3XofReader, Sha3_256, Sha3_512, Shake128, Shake256};
 
 use crate::params::KYBER_SYMBYTES;
 
 pub fn hash_h(buffer: &[u8]) -> [u8; 32] {
     let digest = Sha3_256::digest(buffer);
     digest.as_slice().try_into().unwrap()
-  
 }
 
 pub fn hash_g(buffer: &[u8]) -> [u8; 64] {
@@ -37,11 +36,11 @@ impl XofState {
 
     pub fn absorb(&mut self, data: &[u8; KYBER_SYMBYTES], x: u8, y: u8) {
         let xof = match &mut self.0 {
-           XofStateVariant::Absorb(xof) => xof,
-           _ => panic!("Can't absorb if you've already finalized!"),
+            XofStateVariant::Absorb(xof) => xof,
+            _ => panic!("Can't absorb if you've already finalized!"),
         };
 
-        let mut buf = [0u8; KYBER_SYMBYTES+2];
+        let mut buf = [0u8; KYBER_SYMBYTES + 2];
         buf[..KYBER_SYMBYTES].copy_from_slice(&data[..]);
         buf[KYBER_SYMBYTES] = x;
         buf[KYBER_SYMBYTES] = y;
@@ -59,6 +58,14 @@ impl XofState {
 
         xof.read(output);
     }
+}
+
+pub fn prf(key: &[u8; KYBER_SYMBYTES], nonce: u8, output: &mut [u8]) {
+    Shake256::default()
+        .chain(&key)
+        .chain(&[nonce])
+        .finalize_xof()
+        .read(output);
 }
 
 #[cfg(test)]

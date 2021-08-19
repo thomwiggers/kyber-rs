@@ -1,6 +1,6 @@
 use std::mem::MaybeUninit;
 
-use crate::{params::*, polyvec::PolyVec, symmetric::*};
+use crate::{params::*, poly::Poly, polyvec::PolyVec, symmetric::*, utils::split_array};
 
 /// Serialize the public key by concatinating the
 /// polynomial vector pk with the seed for matrix A.
@@ -131,15 +131,30 @@ where
 }
 
 pub(crate) fn indcpa_keypair<const K: usize>(
-    publicseed: &[u8; KYBER_SYMBYTES],
+    seed: &[u8; KYBER_SYMBYTES],
 ) -> (IndcpaPublicKey<K>, IndcpaSecretKey<K>)
 where
     [(); kyber_indcpa_skbytes::<K>()]: ,
     [(); kyber_indcpa_pkbytes::<K>()]: ,
+    [(); kyber_eta1::<K>() * KYBER_N / 4]: ,
 {
-    let noiseseed = hash_g(&publicseed[..]);
+    let buf = hash_g(&seed[..]);
+    let (publicseed, noiseseed): (&[u8; KYBER_SYMBYTES], &[u8]) = split_array(&buf);
+    let noiseseed= noiseseed.try_into().unwrap();
 
-    let a = gen_a::<K>(publicseed);
+    let matrix_a = gen_a::<K>(publicseed);
+
+    let mut spkv = PolyVec::<K>::new();
+    let mut nonce = 0;
+    for poly in &mut spkv.vec {
+        *poly = Poly::<K>::from_noise_eta1(noiseseed, nonce);
+        nonce += 1;
+    }
+    let mut e = PolyVec::<K>::new();
+    for poly in &mut e.vec {
+        *poly = Poly::<K>::from_noise_eta1(noiseseed, nonce);
+        nonce += 1;
+    }
 
     let pk = IndcpaPublicKey {
         pk: [0; kyber_indcpa_pkbytes::<K>()],

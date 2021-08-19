@@ -17,3 +17,4 @@ mod params;
 mod poly;
 mod polyvec;
 mod symmetric;
+mod cbd;
