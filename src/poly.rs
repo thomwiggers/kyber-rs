@@ -9,7 +9,7 @@ use std::{
 #[cfg(test)]
 use rand::prelude::*;
 
-use crate::{cbd::poly_cbd_eta1, params::*, symmetric::prf};
+use crate::{cbd::poly_cbd_eta1, ntt::{invntt, ntt}, params::*, reduce::barrett_reduce, symmetric::prf};
 
 /// Polynomial
 #[derive(Debug, PartialEq, Clone)]
@@ -155,6 +155,24 @@ impl<const K: usize> Poly<K> {
         let mut buf = [0u8; kyber_eta1::<K>() * KYBER_N / 4];
         prf(seed, nonce, &mut buf);
         poly_cbd_eta1(&buf)
+    }
+
+    /// Perform in-place NTT on this polynomial
+    pub fn ntt(&mut self) {
+        ntt(&mut self.coeffs);
+        self.reduce();
+    }
+
+    /// Barrett-reduce all coefficients of this polynomial
+    fn reduce(&mut self) {
+        self.coeffs
+            .iter_mut()
+            .for_each(|el| *el = barrett_reduce(*el));
+    }
+
+    /// Perform the inverse NTT
+    pub fn invntt(&mut self) {
+        invntt(&mut self.coeffs);
     }
 }
 
@@ -414,5 +432,14 @@ mod test {
         start.to_bytes(&mut out);
         let poly2 = Poly::<2>::from_bytes(&out);
         assert_eq!(start, poly2);
+    }
+
+    #[test]
+    fn test_ntt_invntt() {
+        let mut p = Poly::<3>::random();
+        let p2 = p.clone();
+        p.ntt();
+        p.invntt();
+        assert_eq!(p, p2);
     }
 }

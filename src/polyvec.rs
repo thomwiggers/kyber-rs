@@ -50,6 +50,10 @@ impl<const K: usize> PolyVec<K> {
         let vec = unsafe { MaybeUninit::array_assume_init(vec) };
         PolyVec { vec }
     }
+
+    pub fn ntt(&mut self) {
+        self.vec.iter_mut().for_each(|p| p.ntt());
+    }
 }
 
 #[cfg(test)]

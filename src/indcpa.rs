@@ -156,6 +156,9 @@ where
         nonce += 1;
     }
 
+    spkv.ntt();
+    e.ntt();
+
     let pk = IndcpaPublicKey {
         pk: [0; kyber_indcpa_pkbytes::<K>()],
     };
