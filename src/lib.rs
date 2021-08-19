@@ -1,13 +1,19 @@
 #![allow(incomplete_features)]
 #![allow(clippy::identity_op)]
 #![feature(array_chunks, const_generics, const_evaluatable_checked)]
-#![feature(maybe_uninit_uninit_array, maybe_uninit_array_assume_init, maybe_uninit_extra)]
+#![feature(
+    maybe_uninit_uninit_array,
+    maybe_uninit_array_assume_init,
+    maybe_uninit_extra,
+    maybe_uninit_slice,
+    maybe_uninit_write_slice
+)]
 
 mod utils;
-pub(crate) use utils::*;
 
+mod indcpa;
+pub mod kem;
 mod params;
 mod poly;
 mod polyvec;
-mod indcpa;
-pub mod kem;
+mod symmetric;

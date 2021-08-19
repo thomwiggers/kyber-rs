@@ -14,7 +14,7 @@ use crate::params::*;
 /// Polynomial
 #[derive(Debug, PartialEq, Clone)]
 pub struct Poly<const K: usize> {
-    coeffs: [i16; KYBER_N],
+    pub(crate) coeffs: [i16; KYBER_N],
 }
 
 fn positive_repr(p: i16) -> u16 {

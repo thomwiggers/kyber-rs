@@ -8,14 +8,23 @@ use crate::{
 
 #[derive(Debug, PartialEq)]
 pub struct PolyVec<const K: usize> {
-    vec: [Poly<K>; K],
+    pub(crate) vec: [Poly<K>; K],
 }
 
 impl<const K: usize> PolyVec<K> {
     pub(crate) const POLYVECBYTES: usize = K * KYBER_POLYBYTES;
 
+    pub fn new() -> Self {
+        let mut vec = MaybeUninit::uninit_array();
+        for v in &mut vec {
+            *v = MaybeUninit::new(Poly::<K>::zero());
+        }
+        let vec = unsafe { MaybeUninit::array_assume_init(vec) };
+        PolyVec { vec }
+    }
+
     #[cfg(test)]
-    fn random() -> Self {
+    pub(crate) fn random() -> Self {
         let mut vec = MaybeUninit::uninit_array();
         for poly in vec.iter_mut() {
             *poly = MaybeUninit::new(Poly::<K>::random());
@@ -32,7 +41,7 @@ impl<const K: usize> PolyVec<K> {
             .for_each(|(vec, outbuf)| vec.to_bytes(outbuf));
     }
 
-    pub fn from_bytes(input: &[u8; K * KYBER_POLYBYTES]) -> Self {
+    pub fn from_bytes(input: &[u8; kyber_polyvec_bytes::<K>()]) -> Self {
         let mut vec = MaybeUninit::uninit_array();
         for (poly, bytes) in vec.iter_mut().zip(input.array_chunks::<KYBER_POLYBYTES>()) {
             *poly = MaybeUninit::new(Poly::from_bytes(bytes));

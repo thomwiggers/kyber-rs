@@ -9,3 +9,6 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8"
+sha2 = "0.9"
+sha3 = "0.9"
+digest = "0.9"

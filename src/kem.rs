@@ -23,6 +23,8 @@ pub struct Ciphertext<const SIZE: usize>([u8; SIZE]);
 pub struct SharedSecret([u8; KYBER_SSBYTES]);
 
 pub mod kyber512 {
+    use crate::indcpa::indcpa_keypair;
+
     use super::*;
 
     const K: usize = 2;
@@ -36,6 +38,7 @@ pub mod kyber512 {
     pub fn keypair() -> Result<(PublicKey, SecretKey), ()> {
         // let pk = PublicKey(KyberPublicKey([0; PK_BYTES]));
         // let sk = SecretKey(KyberSecretKey([0; SK_BYTES]));
+        let _ = indcpa_keypair::<K>(&[0u8; KYBER_SYMBYTES]);
         Err(())
     }
 

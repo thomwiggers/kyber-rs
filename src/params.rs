@@ -53,4 +53,8 @@ pub const fn kyber_indcpa_pkbytes<const K: usize>() -> usize {
     kyber_polyvec_bytes::<K>() + KYBER_SYMBYTES
 }
 
+pub const fn kyber_indcpa_skbytes<const K: usize>() -> usize {
+    kyber_polyvec_bytes::<K>()
+}
+
 pub const KYBER_ETA2: usize = 2;
