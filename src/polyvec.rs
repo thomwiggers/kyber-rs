@@ -54,6 +54,10 @@ impl<const K: usize> PolyVec<K> {
     pub fn ntt(&mut self) {
         self.vec.iter_mut().for_each(|p| p.ntt());
     }
+
+    pub fn invntt(&mut self) {
+        self.vec.iter_mut().for_each(|p| p.invntt());
+    }
 }
 
 #[cfg(test)]
