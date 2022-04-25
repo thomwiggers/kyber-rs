@@ -14,7 +14,7 @@ jobs:
           - nightly
 
     steps:
-      - uses: actions/checkout@v3.0.1
+      - uses: actions/checkout@v3.0.2
         with:
           submodules: true
 
